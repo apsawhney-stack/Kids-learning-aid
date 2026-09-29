@@ -1,25 +1,45 @@
 {
   "expo": {
-    "name": "temp-app",
-    "slug": "temp-app",
+    "name": "MindStep",
+    "slug": "mindstep",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.personal.mindstep",
+      "infoPlist": {
+        "NSCameraUsageDescription": "MindStep needs camera access so your son can snap photos of homework worksheets.",
+        "NSPhotoLibraryUsageDescription": "MindStep needs photo library access to upload worksheets and textbook pages.",
+        "NSMicrophoneUsageDescription": "MindStep needs microphone access so your son can speak his homework questions directly to Coach Spark."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#4F46E5",
+        "foregroundImage": "./assets/android-icon-foreground.png"
       },
-      "predictiveBackGestureEnabled": false
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "RECORD_AUDIO"
+      ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow MindStep to access your photos to inspect homework worksheets."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow MindStep to access your microphone so your son can speak his homework questions directly to Coach Spark."
+        }
+      ]
+    ]
   }
 }
