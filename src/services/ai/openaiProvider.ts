@@ -14,11 +14,13 @@ export async function callOpenAI(
     }
   ];
 
+  const firstUserIdx = payload.messages.findIndex((m) => m.role === 'user');
+
   for (let i = 0; i < payload.messages.length; i++) {
     const msg = payload.messages[i];
-    const isLastUser = i === payload.messages.length - 1 && msg.role === 'user';
+    const isFirstUser = i === firstUserIdx;
 
-    if (isLastUser && payload.imageBase64) {
+    if (isFirstUser && payload.imageBase64) {
       messages.push({
         role: 'user',
         content: [

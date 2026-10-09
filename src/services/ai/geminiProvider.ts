@@ -91,7 +91,7 @@ export async function callGemini(
   }
 
   if (payload.imageBase64) {
-    const lastUserIndex = contents.map((c) => c.role).lastIndexOf('user');
+    const firstUserIndex = contents.map((c) => c.role).indexOf('user');
     const imagePart = {
       inlineData: {
         mimeType: payload.imageMimeType || 'image/jpeg',
@@ -99,8 +99,8 @@ export async function callGemini(
       }
     };
 
-    if (lastUserIndex !== -1) {
-      contents[lastUserIndex].parts.unshift(imagePart);
+    if (firstUserIndex !== -1) {
+      contents[firstUserIndex].parts.unshift(imagePart);
     } else {
       contents.push({
         role: 'user',

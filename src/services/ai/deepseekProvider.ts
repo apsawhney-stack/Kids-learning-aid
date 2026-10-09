@@ -15,15 +15,17 @@ export async function callDeepSeek(
     }
   ];
 
+  const firstUserIdx = payload.messages.findIndex((m) => m.role === 'user');
+
   for (let i = 0; i < payload.messages.length; i++) {
     const msg = payload.messages[i];
-    const isLastUser = i === payload.messages.length - 1 && msg.role === 'user';
+    const isFirstUser = i === firstUserIdx;
 
-    if (isLastUser && payload.imageBase64) {
+    if (isFirstUser && payload.imageBase64) {
       // DeepSeek text API currently accepts text; attach clear homework context if an image was uploaded
       messages.push({
         role: 'user',
-        content: `${msg.content}\n\n[Note: The student uploaded a photo of their homework worksheet. Help guide them through the problem described above.]`
+        content: `${msg.content}\n\n[Note: The student uploaded a photo of their homework worksheet at the start of this session. Help guide them through the problem described above.]`
       });
     } else {
       messages.push({

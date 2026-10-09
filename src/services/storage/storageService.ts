@@ -48,17 +48,24 @@ export async function saveStudentProfile(profile: StudentProfile): Promise<void>
 
 export async function getStoredProviderConfig(): Promise<ProviderConfig> {
   try {
-    const activeProvider = (await AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_PROVIDER)) || 'gemini';
+    const migrated = await AsyncStorage.getItem('mindstep_provider_migrated_to_deepseek_v1');
+    if (!migrated) {
+      await AsyncStorage.setItem('mindstep_provider_migrated_to_deepseek_v1', 'true');
+      await AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_PROVIDER, 'deepseek');
+      await AsyncStorage.setItem(STORAGE_KEYS.PROVIDER_MODEL, 'deepseek-chat');
+    }
+
+    const activeProvider = (await AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_PROVIDER)) || 'deepseek';
     const savedModel = await AsyncStorage.getItem(STORAGE_KEYS.PROVIDER_MODEL);
     let apiKey = '';
-    let modelName = savedModel || 'gemini-2.5-flash';
+    let modelName = savedModel || (activeProvider === 'deepseek' ? 'deepseek-chat' : 'gemini-2.5-flash');
 
-    if (activeProvider === 'gemini') {
-      apiKey = (await getSecureItem(KEY_GEMINI_KEY)) || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
-      modelName = savedModel || 'gemini-2.5-flash';
-    } else if (activeProvider === 'deepseek') {
+    if (activeProvider === 'deepseek') {
       apiKey = (await getSecureItem(KEY_DEEPSEEK_KEY)) || process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY || '';
       modelName = savedModel || 'deepseek-chat';
+    } else if (activeProvider === 'gemini') {
+      apiKey = (await getSecureItem(KEY_GEMINI_KEY)) || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+      modelName = savedModel || 'gemini-2.5-flash';
     } else if (activeProvider === 'openai') {
       apiKey = (await getSecureItem(KEY_OPENAI_KEY)) || process.env.EXPO_PUBLIC_OPENAI_API_KEY || '';
       modelName = savedModel || 'gpt-4o-mini';
@@ -73,7 +80,7 @@ export async function getStoredProviderConfig(): Promise<ProviderConfig> {
       modelName
     };
   } catch (err) {
-    return { provider: 'gemini', apiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY || '', modelName: 'gemini-2.5-flash' };
+    return { provider: 'deepseek', apiKey: process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY || '', modelName: 'deepseek-chat' };
   }
 }
 
@@ -107,16 +114,28 @@ export async function getBackupProviderConfig(): Promise<{
   apiKey: string;
   modelName: string;
 } | null> {
-  const deepseekKey = (await getSecureItem(KEY_DEEPSEEK_KEY)) || process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY;
-  if (deepseekKey && deepseekKey.trim()) {
-    return { provider: 'deepseek', apiKey: deepseekKey.trim(), modelName: 'deepseek-chat' };
+  const activeConfig = await getStoredProviderConfig();
+
+  // If active provider is deepseek, check Gemini as primary backup
+  if (activeConfig.provider === 'deepseek') {
+    const geminiKey = (await getSecureItem(KEY_GEMINI_KEY)) || process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+    if (geminiKey && geminiKey.trim()) {
+      return { provider: 'gemini', apiKey: geminiKey.trim(), modelName: 'gemini-2.5-flash' };
+    }
+  } else {
+    // If active is not deepseek, check DeepSeek as backup
+    const deepseekKey = (await getSecureItem(KEY_DEEPSEEK_KEY)) || process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY;
+    if (deepseekKey && deepseekKey.trim()) {
+      return { provider: 'deepseek', apiKey: deepseekKey.trim(), modelName: 'deepseek-chat' };
+    }
   }
+
   const openaiKey = (await getSecureItem(KEY_OPENAI_KEY)) || process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-  if (openaiKey && openaiKey.trim()) {
+  if (activeConfig.provider !== 'openai' && openaiKey && openaiKey.trim()) {
     return { provider: 'openai', apiKey: openaiKey.trim(), modelName: 'gpt-4o-mini' };
   }
   const claudeKey = (await getSecureItem(KEY_CLAUDE_KEY)) || process.env.EXPO_PUBLIC_CLAUDE_API_KEY;
-  if (claudeKey && claudeKey.trim()) {
+  if (activeConfig.provider !== 'claude' && claudeKey && claudeKey.trim()) {
     return { provider: 'claude', apiKey: claudeKey.trim(), modelName: 'claude-3-5-sonnet-20241022' };
   }
   return null;

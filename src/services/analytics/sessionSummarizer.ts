@@ -2,6 +2,7 @@ import { HomeworkSession } from '../../types/chat';
 import { SessionInsight } from '../../types/parent';
 import { buildParentSummaryPrompt } from '../ai/promptTemplates';
 import { getStoredProviderConfig, saveParentInsight } from '../storage/storageService';
+import { callDeepSeek } from '../ai/deepseekProvider';
 import { callGemini } from '../ai/geminiProvider';
 import { callOpenAI } from '../ai/openaiProvider';
 import { callClaude } from '../ai/claudeProvider';
@@ -29,7 +30,13 @@ export async function summarizeSessionForParent(session: HomeworkSession): Promi
   if (config.apiKey && config.apiKey.trim() !== '') {
     try {
       let rawText = '';
-      if (config.provider === 'gemini') {
+      if (config.provider === 'deepseek') {
+        const res = await callDeepSeek(config.apiKey, 'deepseek-chat', {
+          systemPrompt: 'You output strictly valid JSON only. No markdown formatting, no commentary.',
+          messages: [{ role: 'user', content: prompt }]
+        });
+        rawText = res.text;
+      } else if (config.provider === 'gemini') {
         const res = await callGemini(config.apiKey, 'gemini-1.5-flash', {
           systemPrompt: 'You output strictly valid JSON only. No markdown formatting, no commentary.',
           messages: [{ role: 'user', content: prompt }]

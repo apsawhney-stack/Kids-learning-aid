@@ -38,11 +38,11 @@ interface SettingsScreenProps {
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const insets = useSafeAreaInsets();
-  const [provider, setProvider] = useState<LLMProviderId>('gemini');
+  const [provider, setProvider] = useState<LLMProviderId>('deepseek');
   const [apiKey, setApiKey] = useState('');
   const [deepseekApiKey, setDeepseekApiKey] = useState('');
   const [testingDeepSeek, setTestingDeepSeek] = useState(false);
-  const [modelName, setModelName] = useState('gemini-2.5-flash');
+  const [modelName, setModelName] = useState('deepseek-chat');
   const [studentName, setStudentName] = useState('Alex');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([
     'Basketball & Sports',
@@ -86,7 +86,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
     setProvider(config.provider);
     setApiKey(config.apiKey);
     setDeepseekApiKey(storedDeepSeek);
-    setModelName(config.modelName || 'gemini-2.5-flash');
+    setModelName(config.modelName || (config.provider === 'deepseek' ? 'deepseek-chat' : 'gemini-2.5-flash'));
     setStudentName(profile.name);
     setSelectedInterests(profile.interests);
     setPin(storedPin);

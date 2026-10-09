@@ -33,28 +33,26 @@ describe('Environment Variable API Key Loading', () => {
     process.env = originalEnv;
   });
 
-  test('reads EXPO_PUBLIC_DEEPSEEK_API_KEY from environment variables', async () => {
+  test('reads EXPO_PUBLIC_DEEPSEEK_API_KEY from environment variables for primary DeepSeek provider', async () => {
     process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY = 'sk-deepseek-env-12345';
 
     const key = await getDeepSeekApiKey();
     expect(key).toBe('sk-deepseek-env-12345');
+
+    const config = await getStoredProviderConfig();
+    expect(config.provider).toBe('deepseek');
+    expect(config.apiKey).toBe('sk-deepseek-env-12345');
+    expect(config.modelName).toBe('deepseek-chat');
   });
 
-  test('configures backup provider from EXPO_PUBLIC_DEEPSEEK_API_KEY', async () => {
-    process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY = 'sk-deepseek-env-backup';
+  test('configures Gemini backup provider when DeepSeek is primary', async () => {
+    process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY = 'sk-deepseek-env-primary';
+    process.env.EXPO_PUBLIC_GEMINI_API_KEY = 'gemini-env-backup-key';
 
     const backup = await getBackupProviderConfig();
     expect(backup).not.toBeNull();
-    expect(backup?.provider).toBe('deepseek');
-    expect(backup?.apiKey).toBe('sk-deepseek-env-backup');
-    expect(backup?.modelName).toBe('deepseek-chat');
-  });
-
-  test('falls back to EXPO_PUBLIC_GEMINI_API_KEY for primary Gemini provider', async () => {
-    process.env.EXPO_PUBLIC_GEMINI_API_KEY = 'gemini-env-key-999';
-
-    const config = await getStoredProviderConfig();
-    expect(config.provider).toBe('gemini');
-    expect(config.apiKey).toBe('gemini-env-key-999');
+    expect(backup?.provider).toBe('gemini');
+    expect(backup?.apiKey).toBe('gemini-env-backup-key');
+    expect(backup?.modelName).toBe('gemini-2.5-flash');
   });
 });
